@@ -1,11 +1,8 @@
-library(shiny)
-library(DT)
-library(shinydashboard)
-library(leaflet)
 library(maps)
 library(tidyr)
 library(htmltools)
-
+library(ggplot2)
+library(plyr)
 
 
 function(input, output, session){
@@ -16,7 +13,7 @@ function(input, output, session){
     CD <- raw_slice %>% 
       filter(.,borough %in% input$CDborough) %>%
       filter(., complaint_type %in% input$CDcomplaint_type)
-    CD <- CD %>% group_by(., CD[,input$timescale]) %>% arrange(., desc(CD[,input$timescale])) %>% summarise(., chartcount=n())
+    CD <- CD %>% group_by(., CD[,input$timescale]) %>% arrange(., desc(CD[,input$timescale])) %>% dplyr::summarise(., chartcount=n())
     return(CD)
   })
   
@@ -30,26 +27,27 @@ function(input, output, session){
     return(HD)
   })
   
-  HeatDataD <- debounce(HeatData, 3000)
+  HeatDataD <- debounce(HeatData, 1000)
 
   topHeatData <- reactive({ 
     THD <-  HeatData() %>%
-    group_by(., latitude, longitude,complaint_type, incident_address) %>% summarize(., top_complaint_count=n()) 
-   THD1 <- THD %>% mutate(., total_count=sum(top_complaint_count)) %>% filter(top_complaint_count == max(top_complaint_count)) %>% arrange(.,desc(total_count)) #%>% rename(.,complaint_type=top_complaint_type)
-    return(head(THD1, 50))
+    group_by(., latitude, longitude,complaint_type, incident_address) %>% dplyr::summarize(., top_complaint_count=n()) %>% arrange(.,desc(top_complaint_count))
+     THD1 <- THD %>% group_by(., incident_address) %>% dplyr::mutate(., total_count=sum(top_complaint_count)) %>% filter(top_complaint_count == max(top_complaint_count)) %>% arrange(.,desc(total_count)) 
+   return(head(THD1, 50))
   })
   
-  topHeatDataD <- debounce(topHeatData, 3000)
+  topHeatDataD <- debounce(topHeatData, 1000)
 
 
   output$charts <- renderPlotly({
 
-    plot_ly(data=ChartData())%>%
+   pchart <-  plot_ly(data=ChartData())%>%
       add_trace( x=ChartData()[[1]], y = ~chartcount,
                  type = 'scatter', mode = 'lines', line = list(color = 'rgb(200, 50, 50)', width = 2)) %>% 
     layout(title ="<b>Number of Incidents Over 2015</b>", xaxis = list(title = paste(c('Timescale:'), input$timescale), showticklabels = TRUE),
              yaxis = list(title = "Incident Count"),showlegend = FALSE)
-
+     pchart$elementId <- NULL
+      pchart
   })
   # observe({print(input$timescale)})
   #   output$leafmap <- renderLeaflet({
@@ -101,12 +99,12 @@ function(input, output, session){
     })
     
     output$heatTotBox <- renderInfoBox({
-      heatTot <- summarise(HeatDataD(), count=n())
+      heatTot <- dplyr::summarise(HeatDataD(), count=n())
       heat50 <- ungroup(topHeatDataD()) %>% summarise(., tcount=sum(total_count))
       infoBox( h6('Total Number of Incidents Visualized:'), subtitle=HTML(paste('Total Incidents:',tags$b(heatTot), br(),'Top 50 Incident Count:', tags$b(heat50[[1]]))), width=12, color='black')
     })
     output$heatPropBox <- renderInfoBox({
-      heatTot <- summarise(HeatDataD(), hcount=n())
+      heatTot <- dplyr::summarize(HeatDataD(), hcount=n())
       heat50 <- ungroup(topHeatDataD()) %>% summarise(., tcount=sum(total_count))
       heatProp= heat50[[1]]/heatTot[1]
       

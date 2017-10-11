@@ -8,6 +8,15 @@
 #choice <-col_groups
 
 ##save data file as .rda here
+library(data.table)
+library(plotly)
+library(leaflet)
+library(shiny)
+library(DT)
+library(shinydashboard)
+library(dplyr)
+library(ggplot2)
+
 raw_slice = fread('./shiny_data.csv')
 raw_slice[raw_slice==""] <- NA
 raw_slice <- na.omit(raw_slice)

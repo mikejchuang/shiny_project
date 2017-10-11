@@ -2,11 +2,17 @@ library(dplyr)
 library(ggplot2)
 library(data.table)
 library(R.utils)
-raw_data_full <- fread("./Service_Requests_311.csv", stringsAsFactors = F, nrows=5000)
+raw_data_full <- fread("./311_Service_Requests_from_2015.csv",select = c("Unique Key", "Complaint Type",'Descriptor','Borough', 'Latitude','Longitude'), nrows=500000)
 #raw_data_full <- as.data.frame(raw_data_full)
+test1 <- (raw_data_full$`Complaint Type`)
 
-nL <- countLines('./311_Service_Requests_from_2015.csv')
 
+sort(table(raw_slice$complaint_type))
+filter_test <- table(grep('((.*\\btree.*)|(branch))',x=test1,ignore.case=TRUE,value = TRUE))
+filter_test
+
+nL <-countLines('./311_Service_Requests_from_2015.csv')
+nL
 raw_slice = fread('./311_Service_Requests_from_2015.csv',select = c("Unique Key","Incident Zip","Incident Address", "Created Date", "Complaint Type",'Descriptor','Borough', 'Latitude','Longitude'))
 names(raw_slice) <-  tolower(names(raw_slice))
 names(raw_slice) <- gsub(" ", '_', names(raw_slice))

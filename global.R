@@ -16,6 +16,7 @@ library(DT)
 library(shinydashboard)
 library(dplyr)
 library(ggplot2)
+library(leaflet.extras)
 
 raw_slice = fread('./shiny_data.csv')
 raw_slice[raw_slice==""] <- NA

@@ -2,12 +2,11 @@ library(maps)
 library(tidyr)
 library(htmltools)
 library(ggplot2)
-library(plyr)
 
 
 function(input, output, session){
 
-  ##setting up Data
+  ##setting up reactive data to be used in chart and graphs
   
   ChartData <- reactive({
     CD <- raw_slice %>% 
@@ -27,18 +26,19 @@ function(input, output, session){
     return(HD)
   })
   
-  HeatDataD <- debounce(HeatData, 1000)
+  HeatDataD <- debounce(HeatData, 2000)
 
   topHeatData <- reactive({ 
     THD <-  HeatData() %>%
     group_by(., latitude, longitude,complaint_type, incident_address) %>% dplyr::summarize(., top_complaint_count=n()) %>% arrange(.,desc(top_complaint_count))
-     THD1 <- THD %>% group_by(., incident_address) %>% dplyr::mutate(., total_count=sum(top_complaint_count)) %>% filter(top_complaint_count == max(top_complaint_count)) %>% arrange(.,desc(total_count)) 
+     THD1 <- THD %>% dplyr::mutate(., total_count=sum(top_complaint_count)) %>% filter(top_complaint_count == max(top_complaint_count)) %>% arrange(.,desc(total_count)) 
    return(head(THD1, 50))
   })
   
-  topHeatDataD <- debounce(topHeatData, 1000)
+  topHeatDataD <- debounce(topHeatData, 2000)
 
-
+# Output for Interactive Chart
+  
   output$charts <- renderPlotly({
 
    pchart <-  plot_ly(data=ChartData())%>%
@@ -49,15 +49,8 @@ function(input, output, session){
      pchart$elementId <- NULL
       pchart
   })
-  # observe({print(input$timescale)})
-  #   output$leafmap <- renderLeaflet({
-  #     leaflet(raw_slice) %>%
-  #       addTiles() %>%
-  #       addMarkers(clusterOptions = markerClusterOptions(), popup = ~paste('<b><font color="Black">','Incident Type:', complaint_type,'</font></b><br/>',
-  #                                                                          'Date:', created_date,'<br/>',
-  #                                                                          'Address:', incident_address,'<br/>',
-  #                                                                          'Description', descriptor))
-  # })
+
+  #Output for Interactive Map
   
     output$leafheat <- renderLeaflet({
 
@@ -66,10 +59,10 @@ function(input, output, session){
       setView(lat = 40.73, lng = -73.92,zoom = 11)%>% 
       clearMarkerClusters() %>% 
       clearMarkers() %>%
-      removeWebGLHeatmap(layerId = 'h') %>%
+      #removeWebGLHeatmap(layerId = 'h') %>%
      addMarkers( lng=~longitude, lat=~latitude,clusterOptions =markerClusterOptions(), label=~paste( 'Address:', incident_address,'\n',
                                                                                                       'Complaint Type:',complaint_type, '\n'), group='clusters')%>%
-      addWebGLHeatmap( layerId = 'h',lng=~longitude, lat=~latitude, size=75, alphaRange=0.01, group='heatmap') %>%
+      addWebGLHeatmap( lng=~longitude, lat=~latitude, size=75, alphaRange=0.01, group='heatmap') %>%
        addAwesomeMarkers(data=topHeatDataD(), lng=~longitude, lat=~latitude, icon=icon('map-pin') , group='Top_50', 
                     popup= ~paste('<b><font color="Black">','Address Information:','</font></b><br/>',
                                   'Rank:',dense_rank(desc(total_count)),'<br/>',
@@ -83,6 +76,8 @@ function(input, output, session){
           options = layersControlOptions(collapsed = FALSE)) %>%hideGroup('heatmap') %>% hideGroup('Top_50')
                         
     })
+    
+    #Info boxes for Interactive Chart
     
     output$chartAvgBox <- renderInfoBox({
      
@@ -98,6 +93,8 @@ function(input, output, session){
       infoBox(title= tags$b('Minimums and Maximums'),subtitle=HTML(paste('Total Incidents:',tags$b(chartTot), br(), 'Max Incidents:',tags$b(chartMax[,2]),'occuring on:', tags$b(as.character(chartMax[[1]])), br(),'Min Incidents:',tags$b(chartMin[,2]),'occuring on:', tags$b(as.character(chartMin[[1]])))), icon = icon("hand-o-up"),color='black', width=12)
     })
     
+    #Info Boxes and data table for Heat Map
+    
     output$heatTotBox <- renderInfoBox({
       heatTot <- dplyr::summarise(HeatDataD(), count=n())
       heat50 <- ungroup(topHeatDataD()) %>% summarise(., tcount=sum(total_count))
@@ -110,65 +107,18 @@ function(input, output, session){
       
       infoBox( h5('Proportion of Top_50/Total:'), subtitle=tags$h4(tags$b(heatProp)),icon=icon('balance-scale'), width=12, color='black')
     })
+    
     output$topHeatTable <- DT::renderDataTable({
       datatable(topHeatDataD()) %>% 
         formatStyle(input$selected,  
                     background="black", fontWeight='bold')
     })
     
-    # group_selects <- reactiveValues(value = NULL)
-    # observe({
-    #   filters <- c('borough', 'month', 'weekday', 'hour','complaint_type')
-    #   for (i in filters)
-    #     if(!is.null(input$filters[i]) || input$filters[i] != '')
-    #       group_selects <- c(group_selects, filters[i])
-    #   }
-    # })
-    # 
-    # 
-    #  observe({
-    #   p
-    #   
-    #   leafletProxy("leafheat", data = data=raw_slice %>% 
-    #                  filter(.,borough %in% input$borough) %>%
-    #                  #filter(.,year== input$year) %>%
-    #                  filter(., month %in% input$month) %>%
-    #                  filter(., weekday %in% input$weekday)%>%
-    #                  filter(., hour %in% input$hour) %>%
-    #                  filter(., complaint_type %in% input$complaint_type)) %>%
-    #                 group_by(., input$borough, input$month, input$weekday, input$hour)
-    #     
-    #     clearShapes() %>%
-    #     addCircles(radius = ~10^mag/10, weight = 1, color = "#777777",
-    #                fillColor = ~pal(mag), fillOpacity = 0.7, popup = ~paste(mag)
-    #     )
-    # })
-    # 
-
+   #Output for entire data set
+    
   output$table <- DT::renderDataTable({
     datatable(raw_slice) %>% 
       formatStyle(input$selected,  
                   background="black", fontWeight='bold')
   })
 }
-    # Highlight selected column using formatStyle
-    # show statistics using infoBox
-  #   
-  #   output$maxBox <- renderInfoBox({
-  #     max_value <- max(state_stat[,input$selected])
-  #     max_state <- 
-  #       state_stat$state.name[state_stat[,input$selected]==max_value]
-  #     infoBox(max_state, max_value, icon = icon("hand-o-up"))
-  #   })
-  #   output$minBox <- renderInfoBox({
-  #     min_value <- min(state_stat[,input$selected])
-  #     min_state <- 
-  #       state_stat$state.name[state_stat[,input$selected]==min_value]
-  #     infoBox(min_state, min_value, icon = icon("hand-o-down"))
-  #   })
-  #   output$avgBox <- renderInfoBox(
-  #     infoBox(paste("AVG.", input$selected),
-  #             mean(state_stat[,input$selected]), 
-  #             icon = icon("calculator"), fill = TRUE))
-  # }
-  # 

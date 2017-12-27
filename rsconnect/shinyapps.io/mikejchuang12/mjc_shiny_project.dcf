@@ -5,6 +5,9 @@ account: mikejchuang12
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 223923
-bundleId: 1021255
+bundleId: 1150885
 url: https://mikejchuang12.shinyapps.io/mjc_shiny_project/
-when: 1507725214.37394
+when: 1514286575.03415
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: Shiny_Project.R|Shiny_Project.Rmd

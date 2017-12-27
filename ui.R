@@ -14,14 +14,14 @@ dashboardSidebar(
           selectizeInput('borough','Borough', c('BRONX','QUEENS','BROOKLYN','MANHATTAN'), multiple = TRUE,selected = "MANHATTAN" ),
           selectizeInput('month','Month', c(1:12), multiple = TRUE,selected = c(1:12)),
           selectizeInput('weekday','Weekday', weekday_, multiple = TRUE,selected = c('Monday','Tuesday','Wednesday','Thursday','Friday' )),
-          selectizeInput('hour','Hour', c(0:23), multiple=TRUE, selected = c(9:17) ),
+          selectizeInput('hour','Hour', c(0:23), multiple=TRUE, selected = c(0:23) ),
           selectizeInput('complaint_type','Complaint Type',complaint_, multiple = TRUE, selected = 'tree' )),
   
   conditionalPanel("input.sideBarMenu == 'charts'",
                    selectizeInput('CDborough','Borough', c('BRONX','QUEENS','BROOKLYN','MANHATTAN'), multiple = TRUE,selected = "MANHATTAN" ),
                    selectizeInput('CDcomplaint_type','Complaint Type',complaint_, multiple = TRUE,selected = complaint_ ),
                    selectInput('timescale','Time Scale',
-                                choices = c("By month" = 'month', "By week" = 'weeknum', "By weekday" = 'weekday', 'By day'= 'yday', 'By Hour' = 'hour'), 
+                                choices = c("By Month" = 'month', "By Week" = 'weeknum', "By Weekday" = 'weekday', 'By Day'= 'yday', 'By Hour' = 'hour'), 
                                 selected = 'month'))
             ),
 dashboardBody(
@@ -55,21 +55,22 @@ dashboardBody(
   tabItems(
     tabItem(tabName = "summary",
             fluidRow(box(
-                        h2(tags$b("Background Information on 2015 311 Data Analysis")),
+                        h2(tags$b("Summary Information:")),
                         tags$hr(),
-                         h4('Welcome to my shiny app, the main goals of my project were to provide an interactive web dashboard to explore a large dataset \
-                         Taking inspiration from:', tags$a(href="https://www.youtube.com/watch?v=6xsvGYIxJok", "this video,"),'I also wanted to understand how NYC Open Data could provide a deeper understanding of the dynamic city we live in '),
+                         h4('Welcome to my Data Visualization project using packages such as RShiny, Leaflet, and Plotly. The main goals of this project were to analyze a large dataset and to create an interactive dashboard that enables a user to uncover potential insights on both a temporal and geographic level.'),
                           tags$hr(),
-                         p('The dataset initially contained over 2 million rows--when I first inspected the data I noticed over 250 complaint types coming from all of the various agencies.\
-                           My first approach to consolidating this data was to group together as many similar complaints as \
-                           possible, from which I narrowed it down to display the top ten. To illustrate, the category \"tree\" is an aggregation of several complaint_types found such as:',tags$li('Damaged Tree'),
+                        p('To achieve this, I developed two visualizations that can be accessed through the left-hand navigation pane.\
+                            The Interactive Chart provides a user a way to identify unique trends over time by filtering \
+                          by complaint type, borough, or time. And to further investigate a discovered trend, the Interactive Map can be used to similarly filter and then view geographic representations of incident activity.\
+                          Feel free to toggle a heatmap, cluster, and top 50 display to explore the most reported addresses both on the map and within the data table beneath it.'),
+                        tags$hr(),
+                         p('My main inspiration for this project came from a ', tags$a(href="https://www.youtube.com/watch?v=6xsvGYIxJok", "video"),' on data storytelling. I also wanted to understand how NYC Open Data could provide a deeper understanding of the dynamic city we live in. \
+                            For reference, part of my approach in summarizing this dataset of over 2 million rows was to consolidate as many of the similar complaint types as I could into uniform categories.\
+                          Through this process, I narrowed down the over 250 complaint types into 10 categories such as \"noise\", \"vermin\", \"unsanitary\", \"construction\", etc. For example, the category \"tree\" is actually an aggregation of numerous complaint_types found such as:',tags$li('Damaged Tree'),
                             tags$li("Overgrown Tree/Branches"), tags$li("Dead Tree"), tags$li("New Tree Request")),
                             tags$br(),
-                        tags$p('After processing this data set, I displayed the data through two visualizations. The Interactive Chart provides a user a way to identify unique trends over time by filtering \
-                                by complaint type or borough. To further investigate a discovered trend, the Interactive Map can be used to similarly filter and then view geographic representations of incident activity.\
-                                More specifically, a user can zoom in and inspect the top 50 most reported addresses both on the map and within the data table beneath it.'), tags$br(),
-                        tags$p('Lastly, this app is definitely a work in progress and some possible directions I would like to extend it would be:', tags$li("Add correlations between pricing (predicting rent) or crime data (proving broken windows theory) and 311 incident volume"),
-                                   tags$li("Improve performance at higher data volumes"), tags$li('Provide statistics based on the agency that reported the incident')),width=12, status='primary')
+                        tags$p('Lastly, this app is a work in progress and some possible directions I would like to extend it would be:', tags$li("Add external data such as rent price or crime data to explore any potential correlation"),
+                                   tags$li("Improve performance at higher data volumes"), tags$li('Develop real-time integration with Open Data API')),width=12, status='primary')
                     )
             ),
     
